@@ -1,11 +1,51 @@
-# Vue 3 + Typescript + Vite
+```  
+name: 打包应用并上传腾讯云
 
-This template should help get you started developing with Vue 3 and Typescript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+on:
+    push:
+        branches:
+            - master
 
-## Recommended IDE Setup
+jobs:
+    build:
+        # runs-on 指定job任务运行所需要的虚拟机环境(必填字段)
+        runs-on: ubuntu-latest
+        steps:
+            # 获取源码
+            - name: 迁出代码
+              # 使用action库  actions/checkout获取源码
+              uses: actions/checkout@master
 
-- [VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.volar)
+            # 安装Node10
+            - name: 安装node.js
+              # 使用action库  actions/setup-node安装node
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 14.0.0
 
-## Type Support For `.vue` Imports in TS
+            # 安装依赖
+            - name: 安装依赖
+              run: npm install
 
-Since TypeScript cannot handle type information for `.vue` imports, they are shimmed to be a generic Vue component type by default. In most cases this is fine if you don't really care about component prop types outside of templates. However, if you wish to get actual prop types in `.vue` imports (for example to get props validation when using manual `h(...)` calls), you can enable Volar's `.vue` type support plugin by running `Volar: Switch TS Plugin on/off` from VSCode command palette.
+            # 打包
+            - name: 打包
+              run: npm run build
+
+            # 上传腾讯云
+            - name: 发布到腾讯云
+              uses: easingthemes/ssh-deploy@v2.1.1
+              env:
+                  # 私钥
+                  SSH_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+                  # scp参数
+                  ARGS: '-avzr --delete'
+                  # 源目录
+                  SOURCE: 'dist'
+                  # 服务器ip：换成你的服务器IP
+                  REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+                  # 用户
+                  REMOTE_USER: 'root'
+                  # 目标地址
+                  TARGET: '/www/wwwroot'  
+                  
+```  
